@@ -1,18 +1,13 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class NewBehaviourScript : MonoBehaviour
+namespace  GlobalTypes
 {
-    // Start is called before the first frame update
-    void Start()
+    public enum GroundType
     {
-        
-    }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+        None,
+        LevelGeometry,
+        OneWayPlatform,
+        MovingPlatform,
+        CollapseablePlatform,
+        JumpPad,
+        }
 }

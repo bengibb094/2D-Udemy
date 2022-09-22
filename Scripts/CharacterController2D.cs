@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using GlobalTypes;
 
 public class CharacterController2D : MonoBehaviour
 {
@@ -9,6 +10,7 @@ public class CharacterController2D : MonoBehaviour
 
     //flags
     public bool below;
+    public GroundType groundType; //reports back to character controller 2D what  ground type we are standing on.
 
 
     private Vector2 _moveAmount;
@@ -82,10 +84,33 @@ public class CharacterController2D : MonoBehaviour
 //Check if there is something else below us
         if (numberOfGroundHits > 0)
         {
+            //Check the middle raycast for the ground type it is hitting off
+            if (_raycastHits[1].collider)//Does the raycast at position 1 hit off a collider
+            {
+                groundType = DetermineGroundType(_raycastHits[1].collider);
+
+            }
+
+            //If the middle raycast hits nothing go through them all to see if any of the other rays are hitting anything.
+            else 
+            {
+                for (int i = 0; i < _raycastHits.Length; i++)
+                {
+                    if (_raycastHits[i].collider)
+                    {
+                        groundType = DetermineGroundType(_raycastHits[i].collider);
+
+                    }
+
+                }
+
+            }
+
             below = true;
         }
         else
         {
+            groundType = GroundType.None; 
             below = false;
         }
 
@@ -115,6 +140,25 @@ public class CharacterController2D : MonoBehaviour
 
         yield return new WaitForSeconds (0.1f);
         _disbaleGroundCheck = false;
+
+    }
+
+    //if we have a special ground type return that ground type if we don't just return the default ground type.
+    private GroundType DetermineGroundType(Collider2D collider)
+    {
+        //if the collider the raycast hits has a GroundEffector attached to it we want to return that ground effector.
+        if (collider.GetComponent<GroundEffector>())
+        {
+            GroundEffector groundEffector = collider.GetComponent<GroundEffector>();
+            return groundEffector.groundType;
+
+        }
+        else 
+        {
+            return GroundType.LevelGeometry;
+
+        }
+
 
     }
 }
