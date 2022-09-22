@@ -590,7 +590,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   walkSpeed: 20
   gravity: 20
-  jumpSpeed: 50
+  jumpSpeed: 15
   isJumping: 0
 --- !u!114 &1445329029
 MonoBehaviour:

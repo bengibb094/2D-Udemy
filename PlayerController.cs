@@ -36,12 +36,15 @@ public class PlayerController : MonoBehaviour
 
         if (_characterController.below) //On the ground
         {
+            isJumping = false;
+
             //Check if the jump button has been pressed
             if (_startJump)
             {
                 _startJump = false;
                 _moveDirection.y = jumpSpeed;
                 isJumping = true;
+                _characterController.DisableGroundCheck();
             }
         }
         else //In the air

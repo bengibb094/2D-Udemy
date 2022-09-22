@@ -21,6 +21,8 @@ public class CharacterController2D : MonoBehaviour
     private Vector2[] _raycastPosition = new Vector2[3];
     private RaycastHit2D[] _raycastHits = new RaycastHit2D[3];
 
+    private bool _disbaleGroundCheck;
+
 
     // Start is called before the first frame update
     void Start()
@@ -40,7 +42,14 @@ public class CharacterController2D : MonoBehaviour
 
         _moveAmount = Vector2.zero;
 
-        CheckGrounded();
+        if (!_disbaleGroundCheck)
+        {
+
+            CheckGrounded();
+
+
+        }
+
     }
 
     public void Move(Vector2 movement)
@@ -88,5 +97,24 @@ public class CharacterController2D : MonoBehaviour
         {
             Debug.DrawRay(_raycastPosition[i], direction * raycastDistance, color);
         }
+    }
+
+//When this method is called the ground check method will be disabled temporarily
+    public void DisableGroundCheck()
+    {
+        below = false;
+        _disbaleGroundCheck = true;
+
+        //Coroutine is a timer you can use for actions
+        StartCoroutine("EnableGroundCheck");
+
+    }
+
+    IEnumerator EnableGroundCheck()
+    {
+
+        yield return new WaitForSeconds (0.1f);
+        _disbaleGroundCheck = false;
+
     }
 }
