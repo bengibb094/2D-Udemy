@@ -7,6 +7,8 @@ public class CharacterController2D : MonoBehaviour
 {
     public float raycastDistance = 0.2f;
     public LayerMask layerMask;
+    public float slopeAngleLimit = 45f;
+    public float downForceAdjustment = 1.2f; 
 
     //flags
     public bool below;
@@ -25,6 +27,9 @@ public class CharacterController2D : MonoBehaviour
 
     private bool _disbaleGroundCheck;
 
+    private Vector2 _slopeNormal; //a grounds normal is a projection from that surface in the direction that surface is facing. Great for angles.
+    private float _slopeAngle; //float means the number can change
+
 
     // Start is called before the first frame update
     void Start()
@@ -37,6 +42,15 @@ public class CharacterController2D : MonoBehaviour
     void FixedUpdate()
     {
         _lastPosition = _rigidbody.position;
+
+        if (_slopeAngle != 0 && below == true)
+        {
+            if((_moveAmount.x > 0f && _slopeAngle > 0f) || (_moveAmount.x < 0f && _slopeAngle < 0f))//checking for movement and angles to adjust y axis movement.
+            {
+                _moveAmount.y = -Mathf.Abs(Mathf.Tan(_slopeAngle * Mathf.Deg2Rad) * _moveAmount.x); //adjusting y axis movement to reflect slope we are on.
+                _moveAmount.y *= downForceAdjustment;//increasing downward force by 20% when travelling down a slope.
+            }
+        }
 
         _currentPostion = _lastPosition + _moveAmount;
 
@@ -88,6 +102,8 @@ public class CharacterController2D : MonoBehaviour
             if (_raycastHits[1].collider)//Does the raycast at position 1 hit off a collider
             {
                 groundType = DetermineGroundType(_raycastHits[1].collider);
+                _slopeNormal = _raycastHits[1].normal; //Determine the normal of the angle from the middle raycast. 
+                _slopeAngle = Vector2.SignedAngle(_slopeNormal, Vector2.up);//calculate the angle between the up direction and the slope. 
 
             }
 
@@ -99,20 +115,31 @@ public class CharacterController2D : MonoBehaviour
                     if (_raycastHits[i].collider)
                     {
                         groundType = DetermineGroundType(_raycastHits[i].collider);
+                        _slopeNormal = _raycastHits[i].normal; //Determine the normal of the angle from the middle raycast. 
+                        _slopeAngle = Vector2.SignedAngle(_slopeNormal, Vector2.up);//calculate the angle between the up direction and the slope.
 
                     }
 
                 }
 
             }
-
-            below = true;
+            if (_slopeAngle > slopeAngleLimit || _slopeAngle < -slopeAngleLimit)//if the slope is higher than the angle act as if we are not on the ground.
+            {
+                below = false;
+            }
+            else
+            {
+                below = true;
+            }
+            
         }
         else
         {
             groundType = GroundType.None; 
             below = false;
         }
+
+        System.Array.Clear(_raycastHits, 0, _raycastHits.Length);//Clear the array ray cast hits after each ground check and reset all arrays to 0
 
     }
 
