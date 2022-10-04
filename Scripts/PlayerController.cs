@@ -34,8 +34,11 @@ public class PlayerController : MonoBehaviour
         _moveDirection.x = _input.x;
         _moveDirection.x *= walkSpeed;
 
+        Debug.Log(_moveDirection.y);
+
         if (_characterController.below) //On the ground
         {
+            _moveDirection.y = 0f; //if the character is on the ground set the gravity back to zero
             isJumping = false;
 
             //Check if the jump button has been pressed
