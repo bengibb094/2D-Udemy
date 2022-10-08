@@ -34,6 +34,15 @@ public class PlayerController : MonoBehaviour
         _moveDirection.x = _input.x;
         _moveDirection.x *= walkSpeed;
 
+//Handling the rotation of the player in the game
+        if(_moveDirection.x < 0)
+        {
+            transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+        }else if (_moveDirection.x > 0){
+             transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+            
+        }
+
         Debug.Log(_moveDirection.y);
 
         if (_characterController.below) //On the ground
@@ -64,11 +73,23 @@ public class PlayerController : MonoBehaviour
 
             }
 
-            _moveDirection.y -= gravity * Time.deltaTime;
+            GravityCalculations();
         }
         
 
         _characterController.Move(_moveDirection * Time.deltaTime);
+    }
+
+    void GravityCalculations()
+    {
+        //if we are jumping and we hit something drop right back down
+        if (_moveDirection.y > 0f && _characterController.above)
+        {
+            _moveDirection.y = 0f;
+        }
+        
+        _moveDirection.y -= gravity * Time.deltaTime;
+
     }
 
     //Input Methods
@@ -83,10 +104,12 @@ public class PlayerController : MonoBehaviour
         if (context.started)
         {
             _startJump = true;
+            _releaseJump = false;
         }
         else if (context.canceled)
         {
             _releaseJump = true;
+            _startJump = false; 
         }
     }
 }

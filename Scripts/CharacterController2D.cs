@@ -13,6 +13,10 @@ public class CharacterController2D : MonoBehaviour
     //flags
     public bool below;
     public GroundType groundType; //reports back to character controller 2D what  ground type we are standing on.
+    public bool left;
+    public bool right;
+    public bool above;
+    public bool hitGroundThisFrame; 
 
 
     private Vector2 _moveAmount;
@@ -29,6 +33,7 @@ public class CharacterController2D : MonoBehaviour
 
     private Vector2 _slopeNormal; //a grounds normal is a projection from that surface in the direction that surface is facing. Great for angles.
     private float _slopeAngle; //float means the number can change
+    private bool _inAirLastFrame; 
 
 
     // Start is called before the first frame update
@@ -39,8 +44,10 @@ public class CharacterController2D : MonoBehaviour
     }
 
     // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
+        _inAirLastFrame = !below;
+
         _lastPosition = _rigidbody.position;
 
         if (_slopeAngle != 0 && below == true)
@@ -66,6 +73,17 @@ public class CharacterController2D : MonoBehaviour
 
         }
 
+        CheckOtherCollisions();
+
+        if (below && _inAirLastFrame)
+        {
+            hitGroundThisFrame = true; 
+        }
+        else
+        {
+            hitGroundThisFrame = false; 
+        }
+
     }
 
     public void Move(Vector2 movement)
@@ -73,6 +91,84 @@ public class CharacterController2D : MonoBehaviour
         _moveAmount += movement;
     }
 
+    private void CheckGrounded()
+    {
+        //variable to hold the results of the raycast so they can be used again.
+        RaycastHit2D hit = Physics2D.CapsuleCast(_capsuleCollider.bounds.center, _capsuleCollider.size, CapsuleDirection2D.Vertical, 0f, Vector2.down, raycastDistance, layerMask); 
+
+        if (hit.collider)
+        {
+            groundType = DetermineGroundType(hit.collider);
+
+            _slopeNormal = hit.normal;
+            _slopeAngle = Vector2.SignedAngle(_slopeNormal, Vector2.up);
+
+            if (_slopeAngle > slopeAngleLimit || _slopeAngle < -slopeAngleLimit)
+            {
+                below = false;
+            }
+            else
+            {
+                below = true;
+            }
+            
+        }
+        else
+        {
+            groundType = GroundType.None;
+            below = false;
+        }
+    }
+
+    private void CheckOtherCollisions()
+    {
+        //check left
+
+        RaycastHit2D leftHit = Physics2D.BoxCast(_capsuleCollider.bounds.center, _capsuleCollider.size * 0.75f, 0f, Vector2.left, raycastDistance * 2, layerMask);
+
+        if (leftHit.collider)
+        {
+            left = true;
+        }
+        else
+        {
+            left = false;
+        }
+
+        //check right
+
+        RaycastHit2D rightHit = Physics2D.BoxCast(_capsuleCollider.bounds.center, _capsuleCollider.size * 0.75f, 0f, Vector2.right, raycastDistance * 2, layerMask);
+
+        if (rightHit.collider)
+        {
+            right = true;
+        }
+        else
+        {
+            right = false;
+        }
+
+        //check above
+        RaycastHit2D aboveHit = Physics2D.CapsuleCast(_capsuleCollider.bounds.center, _capsuleCollider.size, CapsuleDirection2D.Vertical, 0f, Vector2.up, raycastDistance, layerMask);
+
+        if (aboveHit.collider)
+        {
+            above = true;
+        }
+        else
+        {
+            above = false;
+        }
+
+    }
+
+
+
+
+
+
+
+/*
     private void CheckGrounded()
     {
         Vector2 raycastOrigin = _rigidbody.position - new Vector2(0, _capsuleCollider.size.y * 0.5f);
@@ -141,7 +237,7 @@ public class CharacterController2D : MonoBehaviour
 
         System.Array.Clear(_raycastHits, 0, _raycastHits.Length);//Clear the array ray cast hits after each ground check and reset all arrays to 0
 
-    }
+    }*/
 
     private void DrawDebugRays(Vector2 direction, Color color)
     {
