@@ -10,9 +10,17 @@ public class PlayerController : MonoBehaviour
     public float walkSpeed = 10f;
     public float gravity = 20f;
     public float jumpSpeed = 15f;
+    public float doubleJumpSpeed = 10f;
+    public float tripleJumpSpeed = 10f; 
+
+    //player ability toggles - can be turned on and off
+    public bool  canDoubleJump;
+    public bool canTripleJump; 
 
     //player state handy for making animations in the future
     public bool isJumping;
+    public bool isDoubelJumping;
+    public bool isTripleJumping; 
 
     //input flags
     private bool _startJump;
@@ -49,6 +57,8 @@ public class PlayerController : MonoBehaviour
         {
             _moveDirection.y = 0f; //if the character is on the ground set the gravity back to zero
             isJumping = false;
+            isDoubelJumping = false;//if the player is on the ground set the doublejump to false
+            isTripleJumping = false; 
 
             //Check if the jump button has been pressed
             if (_startJump)
@@ -71,6 +81,40 @@ public class PlayerController : MonoBehaviour
                     _moveDirection.y *= 0.5f;
                 }
 
+            }
+
+            //doubleJumping 
+            /*first check if the jump button has been pressed a second time.
+            Check if the player can doublejump in the first place and check if there is anything to their immediate left or right.
+            Also don't forget to reset start jump to false. */
+            if (_startJump)
+            {
+                
+                if (canDoubleJump && (!_characterController.left && !_characterController.right))
+                {
+                    if (isDoubelJumping && !isTripleJumping)
+                    {
+                        _moveDirection.y = tripleJumpSpeed;
+                        isTripleJumping = true;
+                    }
+                }
+
+
+                if (canDoubleJump && (!_characterController.left && !_characterController.right))
+                {
+                    //cheks the player is not already double jumping and if they aren't it will do the double jump.
+                    if (!isDoubelJumping)
+                    {
+                        _moveDirection.y = doubleJumpSpeed;
+                        isDoubelJumping = true;
+                    }
+
+                }
+                
+
+
+
+               _startJump = false; 
             }
 
             GravityCalculations();
