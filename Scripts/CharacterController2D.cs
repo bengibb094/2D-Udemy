@@ -17,6 +17,7 @@ public class CharacterController2D : MonoBehaviour
     public bool right;
     public bool above;
     public bool hitGroundThisFrame; 
+    public bool hitWallThisFrame;
 
 
     private Vector2 _moveAmount;
@@ -34,6 +35,7 @@ public class CharacterController2D : MonoBehaviour
     private Vector2 _slopeNormal; //a grounds normal is a projection from that surface in the direction that surface is facing. Great for angles.
     private float _slopeAngle; //float means the number can change
     private bool _inAirLastFrame; 
+    private bool _noSideCollissionsLastFrame;
 
 
     // Start is called before the first frame update
@@ -47,6 +49,8 @@ public class CharacterController2D : MonoBehaviour
     void Update()
     {
         _inAirLastFrame = !below;
+
+        _noSideCollissionsLastFrame = (!right && !left);//creating a variable and making it equal when both left and right colisions are false
 
         _lastPosition = _rigidbody.position;
 
@@ -82,6 +86,14 @@ public class CharacterController2D : MonoBehaviour
         else
         {
             hitGroundThisFrame = false; 
+        }
+
+        if ((right || left) && _noSideCollissionsLastFrame)//if right or left colision is true and so is the variable _nosidecolls that means we are hiting a wall now else we are not
+        {
+            hitWallThisFrame = true;
+        }else
+        {
+            hitWallThisFrame = false;
         }
 
     }
