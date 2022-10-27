@@ -17,6 +17,8 @@ public class PlayerController : MonoBehaviour
     public float yWallJumpSpeed = 15f;
     public float wallRunAmount = 8f;
     public float wallSlideAmount = 0.2f; 
+    public float creepSpeed = 5f;
+
 
     //player ability toggles - can be turned on and off
     [Header("Player Abilities")]
@@ -36,6 +38,8 @@ public class PlayerController : MonoBehaviour
     public bool iswallJumping; 
     public bool isWallRunning;
     public bool isWallSliding;
+    public bool isDucking;
+    public bool isCreeping;
 
     //input flags
     private bool _startJump;
@@ -47,10 +51,19 @@ public class PlayerController : MonoBehaviour
 
     private bool _ableToWallRun = true;
 
+    private CapsuleCollider2D _capsuleCollider;
+    private Vector2 _originalColliderSize;
+    //Remove later when not needed
+    private SpriteRenderer _spriteRenderer; //Allows us to change sprite midgame
+
+
     // Start is called before the first frame update
     void Start()
     {
         _characterController = gameObject.GetComponent<CharacterController2D>();
+        _capsuleCollider = gameObject.GetComponent<CapsuleCollider2D>();
+        _spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
+        _originalColliderSize = _capsuleCollider.size; 
     }
 
     // Update is called once per frame
@@ -97,9 +110,55 @@ public class PlayerController : MonoBehaviour
                 _characterController.DisableGroundCheck();
                 _ableToWallRun = true;
             }
+
+            //Ducking and Creeping
+            if (_input.y < 0f)//_input is a vector2 so it's y postion can be manipulated
+            {
+                if (!isDucking && !isCreeping)
+                {
+                    _capsuleCollider.size = new Vector2(_capsuleCollider.size.x, _capsuleCollider.size.y /2);//new vector 2 _capsuleCollider same size on the x but half the size on the y
+                    transform.position = new Vector2(transform.position.x, transform.position.y - (_originalColliderSize.y /4));//same as above but its position is same on the x but quartered on the y
+                    isDucking = true;
+                    _spriteRenderer.sprite = Resources.Load<Sprite>("directionSpriteUp_crouching");//Allows us to swap out sprites from our resources folder.
+                }
+
+            }
+            else
+            {   //if there is no y input and isDucking or isCreeping is true then change the sprite back
+                if (isDucking || isCreeping)
+                {
+                    //Raycast to check if there is anything double or crouched height above us.
+                    RaycastHit2D hitCeiling = Physics2D.CapsuleCast(_capsuleCollider.bounds.center, transform.localScale, CapsuleDirection2D.Vertical, 0f, Vector2.up, _originalColliderSize.y / 2, _characterController.layerMask);
+                    if (!hitCeiling.collider)
+                    {
+                        _capsuleCollider.size = _originalColliderSize;
+                        transform.position = new Vector2(transform.position.x, transform.position.y + (_originalColliderSize.y /4));
+                        _spriteRenderer.sprite = Resources.Load<Sprite>("directionSpriteUp");
+                        isDucking= false;
+                        isCreeping = false;
+
+                    }
+
+                }
+            }
+
+            if (isDucking && _moveDirection.x != 0)
+            {
+                isCreeping = true;
+            }
+            else 
+            {
+                isCreeping = false;
+            }
         }
         else //In the air
         {
+
+            if ((isDucking || isCreeping) && _moveDirection.y > 0)
+            {
+                StartCoroutine("ClearDuckingState");
+            }
+
             //if you are in the air when the button is released you will only do a small jump
             if (_releaseJump)
             {
@@ -295,6 +354,22 @@ public class PlayerController : MonoBehaviour
         {
             _ableToWallRun = false;
         }
+    }
+
+    IEnumerator ClearDuckingState()
+    {
+        yield return new WaitForSeconds(0.05f);
+        RaycastHit2D hitCeiling = Physics2D.CapsuleCast(_capsuleCollider.bounds.center, transform.localScale, CapsuleDirection2D.Vertical, 0f, Vector2.up, _originalColliderSize.y / 2, _characterController.layerMask);
+
+        if (!hitCeiling.collider)
+        {
+            _capsuleCollider.size = _originalColliderSize;
+            //transform.position = new Vector2(transform.position.x, transform.position.y + (_originalColliderSize.y /4));
+            _spriteRenderer.sprite = Resources.Load<Sprite>("directionSpriteUp");
+            isDucking= false;
+            isCreeping = false;
+        }
+
     }
 }
 
