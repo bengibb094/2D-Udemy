@@ -23,6 +23,10 @@ public class PlayerController : MonoBehaviour
     public float glideDesentAmount = 2f;
     public float powerJumpSpeed = 50f;
     public float powerJumpWaitTime = 1.5f;
+    public float dashSpeed = 20f;
+    public float dashTime = 0.2f;
+    public float dashCoolDownTime = 1f;
+    public float groundSlamSpeed = 60f;
 
 
     //player ability toggles - can be turned on and off
@@ -37,6 +41,10 @@ public class PlayerController : MonoBehaviour
     public bool canGlide;
     public bool canGlideAfterWallContact; 
     public bool canPowerJump;
+    public bool canGroundDash;
+    public bool canAirDash;
+    public bool canGroundSlam;
+
 
     //player state handy for making animations in the future
     [Header("Player State")]
@@ -50,6 +58,8 @@ public class PlayerController : MonoBehaviour
     public bool isCreeping;
     public bool isGliding;
     public bool isPowerJumping;
+    public bool isDashing;
+    public bool isGroundSlamming;
 
     //input flags
     private bool _startJump;
@@ -69,7 +79,10 @@ public class PlayerController : MonoBehaviour
     private float _currentGlideTime;//Time the player can glide in the air
     private bool _startGlide;
 
-    public float _powerJumpTimer;
+    private float _powerJumpTimer;
+
+    private bool _facingRight;
+    public float _dashTimer;
 
     // Start is called before the first frame update
     void Start()
@@ -83,22 +96,53 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //Setting thr dash timer
+        if (_dashTimer > 0)
+        {
+            _dashTimer -= Time.deltaTime;
+        }
+        
+
         //Overidng the player input so if the player is wall jumping
         if (!iswallJumping)
         {
             _moveDirection.x = _input.x;
-            _moveDirection.x *= walkSpeed;
+            
 
             //Handling the rotation of the player in the game
             if(_moveDirection.x < 0)
             {
                 transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+                _facingRight = false;
             }   
             else if (_moveDirection.x > 0)
             {
                 transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+                _facingRight = true;
             
             }
+
+            //if isdashing is true and the player is facing right then move them the dash speed
+            if (isDashing)
+            {
+                if (_facingRight)
+                {
+                    _moveDirection.x = dashSpeed;
+                }
+                //if they are not facing right move them the dashspeed left
+                else
+                {
+                    _moveDirection.x = -dashSpeed;
+                }
+                _moveDirection.y = 0f;
+
+            }
+            //else just move the normal walking speed.
+            else
+            {
+                _moveDirection.x *= walkSpeed;
+            }
+
 
         }
 
@@ -136,6 +180,7 @@ public class PlayerController : MonoBehaviour
                 _characterController.DisableGroundCheck();
                 _ableToWallRun = true;
                 _currentGlideTime = glideTime;//Resetting the glide time value so it can be used again.
+                isGroundSlamming = false;
             }
 
             //Ducking and Creeping
@@ -376,7 +421,12 @@ public class PlayerController : MonoBehaviour
             
 
         }
-        else//normal gravity
+        //else if (canGroundSlam && !isPowerJumping && _input.y < 0f && _moveDirection.y < 0f)//For Ground Slam
+        else if (isGroundSlamming && !isPowerJumping && _moveDirection.y < 0f)
+        {
+            _moveDirection.y = -groundSlamSpeed;
+        }
+        else if (!isDashing)//normal gravity
         {
             _moveDirection.y -= gravity * Time.deltaTime;
 
@@ -386,6 +436,8 @@ public class PlayerController : MonoBehaviour
     }
 
     //Input Methods
+    //Input for a new button press must be done with a new public void
+
     public void OnMovement(InputAction.CallbackContext context)
     {
         _input = context.ReadValue<Vector2>();
@@ -405,6 +457,31 @@ public class PlayerController : MonoBehaviour
             _startJump = false; 
         }
     }
+
+    //Attack Button
+    public void onAttack(InputAction.CallbackContext context)
+    {
+        if (context.performed && _input.y < 0f)
+        {
+            if (canGroundSlam)
+            {
+                isGroundSlamming = true;
+            }
+        }
+    }
+
+    public void onDash (InputAction.CallbackContext context)
+    {   
+        //if the button press is started
+        if (context.started && _dashTimer <= 0)
+        {
+            if ((canAirDash && !_characterController.below) || (canGroundDash && _characterController.below))
+            {
+                StartCoroutine("Dash");
+            }
+        }
+    }
+
 
     //coroutines
 
@@ -449,5 +526,14 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(0.8f);
         isPowerJumping = false;
     }
+
+    IEnumerator Dash()
+    {
+        isDashing = true;
+        yield return new WaitForSeconds(dashTime);
+        isDashing = false;
+        _dashTimer = dashCoolDownTime;
+    }
+    
 }
 
