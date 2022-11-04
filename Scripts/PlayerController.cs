@@ -195,13 +195,13 @@ void Update()
     #endregion
 
 //Clear air abilities
-    #region ClearAirAbilities
+#region ClearAirAbilities
     private void ClearAirAbilityFlags()
     {
-            isJumping = false;
-            isDoubelJumping = false;//if the player is on the ground set the doublejump to false
-            isTripleJumping = false; 
-            iswallJumping = false;
+        isJumping = false;
+        isDoubelJumping = false;//if the player is on the ground set the doublejump to false
+        isTripleJumping = false; 
+        iswallJumping = false;
     }
     #endregion
 
