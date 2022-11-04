@@ -4,8 +4,11 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using GlobalTypes;
 
+
 public class PlayerController : MonoBehaviour
 {
+
+#region player properties
     //player properties
     //Any settings you want to set for your player must be set here
     [Header("Player Properties")]
@@ -27,8 +30,9 @@ public class PlayerController : MonoBehaviour
     public float dashTime = 0.2f;
     public float dashCoolDownTime = 1f;
     public float groundSlamSpeed = 60f;
+#endregion
 
-
+#region player abilities
     //player ability toggles - can be turned on and off
     [Header("Player Abilities")]
     public bool canDoubleJump;
@@ -44,8 +48,9 @@ public class PlayerController : MonoBehaviour
     public bool canGroundDash;
     public bool canAirDash;
     public bool canGroundSlam;
+#endregion
 
-
+#region player state
     //player state handy for making animations in the future
     [Header("Player State")]
     public bool isJumping;
@@ -60,7 +65,9 @@ public class PlayerController : MonoBehaviour
     public bool isPowerJumping;
     public bool isDashing;
     public bool isGroundSlamming;
+#endregion
 
+#region private properties
     //input flags
     private bool _startJump;
     private bool _releaseJump;
@@ -82,29 +89,52 @@ public class PlayerController : MonoBehaviour
     private float _powerJumpTimer;
 
     private bool _facingRight;
-    public float _dashTimer;
+    private float _dashTimer;
+#endregion
 
-    // Start is called before the first frame update
-    void Start()
+// Start is called before the first frame update
+#region void start
+void Start()
+{
+    _characterController = gameObject.GetComponent<CharacterController2D>();
+    _capsuleCollider = gameObject.GetComponent<CapsuleCollider2D>();
+    _spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
+    _originalColliderSize = _capsuleCollider.size; 
+}
+#endregion
+
+// Update is called once per frame
+#region void update
+void Update()
+{
+    //Setting thr dash timer
+    if (_dashTimer > 0)
     {
-        _characterController = gameObject.GetComponent<CharacterController2D>();
-        _capsuleCollider = gameObject.GetComponent<CapsuleCollider2D>();
-        _spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
-        _originalColliderSize = _capsuleCollider.size; 
+        _dashTimer -= Time.deltaTime;
     }
+        
+    ProcessHorizontalMovement();
+    //Overidng the player input so if the player is wall jumping
 
-    // Update is called once per frame
-    void Update()
+    if (_characterController.below) //On the ground
     {
-        //Setting thr dash timer
-        if (_dashTimer > 0)
-        {
-            _dashTimer -= Time.deltaTime;
-        }
+        onGround();
+    }
+    else //In the air
+    {
+        inAir();
+
+    }
         
 
-        //Overidng the player input so if the player is wall jumping
-        if (!iswallJumping)
+    _characterController.Move(_moveDirection * Time.deltaTime);
+}
+#endregion
+
+#region ProcessHorizontalMovement
+    private void ProcessHorizontalMovement()
+    {
+                if (!iswallJumping)
         {
             _moveDirection.x = _input.x;
             
@@ -145,45 +175,41 @@ public class PlayerController : MonoBehaviour
 
 
         }
+    }
+    #endregion
 
+//Will call from the update look
+#region onTheGround
+    void onGround()
+    {
+        _moveDirection.y = 0f; //if the character is on the ground set the gravity back to zero
 
+            ClearAirAbilityFlags();
 
+            Jump();
 
-        Debug.Log(_moveDirection.y);
+            DuckingCreeping();            
 
-        if (_characterController.below) //On the ground
-        {
-            _moveDirection.y = 0f; //if the character is on the ground set the gravity back to zero
+            
+    }
+    #endregion
+
+//Clear air abilities
+    #region ClearAirAbilities
+    private void ClearAirAbilityFlags()
+    {
             isJumping = false;
             isDoubelJumping = false;//if the player is on the ground set the doublejump to false
             isTripleJumping = false; 
             iswallJumping = false;
+    }
+    #endregion
 
-            //Check if the jump button has been pressed
-            if (_startJump)
-            {
-                _startJump = false;
-
-                //PowerJumping
-                if (canPowerJump && isDucking && _characterController.groundType != GlobalTypes.GroundType.OneWayPlatform && (_powerJumpTimer > powerJumpWaitTime))
-                {
-                    _moveDirection.y = powerJumpSpeed;
-                    StartCoroutine("PowerJumpWaiter");
-                }
-                else
-                {
-                    _moveDirection.y = jumpSpeed;
-
-                }
-
-                isJumping = true;
-                _characterController.DisableGroundCheck();
-                _ableToWallRun = true;
-                _currentGlideTime = glideTime;//Resetting the glide time value so it can be used again.
-                isGroundSlamming = false;
-            }
-
-            //Ducking and Creeping
+//Ducking and Creeping controls
+#region DuckingCreeping
+    private void DuckingCreeping()
+    {
+        //Ducking and Creeping
             if (_input.y < 0f)//_input is a vector2 so it's y postion can be manipulated
             {
                 if (!isDucking && !isCreeping)
@@ -227,10 +253,61 @@ public class PlayerController : MonoBehaviour
             {
                 isCreeping = false;
             }
-        }
-        else //In the air
-        {
 
+    }
+    #endregion
+
+//Jumping Controls
+#region Jumping
+    private void Jump()
+    {
+        if (_startJump)
+            {
+                _startJump = false;
+
+                //PowerJumping
+                if (canPowerJump && isDucking && _characterController.groundType != GlobalTypes.GroundType.OneWayPlatform && (_powerJumpTimer > powerJumpWaitTime))
+                {
+                    _moveDirection.y = powerJumpSpeed;
+                    StartCoroutine("PowerJumpWaiter");
+                }
+                else
+                {
+                    _moveDirection.y = jumpSpeed;
+
+                }
+
+                isJumping = true;
+                _characterController.DisableGroundCheck();
+                _ableToWallRun = true;
+                _currentGlideTime = glideTime;//Resetting the glide time value so it can be used again.
+                isGroundSlamming = false;
+            }
+    }
+    #endregion
+    
+//Will call from the update look
+//In the air controls
+#region intheair
+    void inAir()
+    {
+
+        ClearGroundAbilityflags();
+
+        AirJump();
+
+        Wallrunning();
+
+        GravityCalculations();
+
+    }
+
+    
+    #endregion
+
+#region voids
+    private void ClearGroundAbilityflags()
+        {
             if ((isDucking || isCreeping) && _moveDirection.y > 0)
             {
                 StartCoroutine("ClearDuckingState");
@@ -238,7 +315,59 @@ public class PlayerController : MonoBehaviour
 
             //clear power jump timer
             _powerJumpTimer = 0f;
+        }
 
+    private void Wallrunning()
+        {
+            //wall running
+            //Check is the ability on and is there actually a wall to our left or right
+            if (canWallRun && (_characterController.left || _characterController.right))
+            {
+                if (_input.y > 0 && _ableToWallRun)//if the move up input is being pressed and ableToWallRun is true then wall run
+                {
+                    _moveDirection.y = wallRunAmount;
+
+                   if (_characterController.left)
+                    {
+                        transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+                    }
+                    else if (_characterController.right)
+                    {
+                        transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+
+                    }
+
+                    StartCoroutine ("wallRunWaiter");
+
+                }
+            }
+            else
+            {
+                if (canMultipleWallRun)
+                {
+                    StopCoroutine("WallRunWaiter");
+                    _ableToWallRun = true;
+                    isWallRunning = false;
+                }
+            }
+
+            //CanGlideAfterWallContact
+            if ((_characterController.left || _characterController.right) && canWallRun)
+            {
+                if (canGlideAfterWallContact)
+                {
+                    _currentGlideTime = glideTime;
+                }
+                else 
+                {
+                    _currentGlideTime = 0;
+                }
+         
+            } 
+        }
+
+    private void AirJump()
+        {
             //if you are in the air when the button is released you will only do a small jump
             if (_releaseJump)
             {
@@ -314,62 +443,7 @@ public class PlayerController : MonoBehaviour
 
                _startJump = false; 
             }
-
-            //wall running
-            //Check is the ability on and is there actually a wall to our left or right
-            if (canWallRun && (_characterController.left || _characterController.right))
-            {
-                if (_input.y > 0 && _ableToWallRun)//if the move up input is being pressed and ableToWallRun is true then wall run
-                {
-                    _moveDirection.y = wallRunAmount;
-
-                   if (_characterController.left)
-                    {
-                        transform.rotation = Quaternion.Euler(0f, 180f, 0f);
-                    }
-                    else if (_characterController.right)
-                    {
-                        transform.rotation = Quaternion.Euler(0f, 0f, 0f);
-
-                    }
-
-                    StartCoroutine ("wallRunWaiter");
-
-                }
-            }
-            else
-            {
-                if (canMultipleWallRun)
-                {
-                    StopCoroutine("WallRunWaiter");
-                    _ableToWallRun = true;
-                    isWallRunning = false;
-                }
-            }
-
-
-
-
-
-            GravityCalculations();
-
-            //CanGlideAfterWallContact
-            if ((_characterController.left || _characterController.right) && canWallRun)
-            {
-                if (canGlideAfterWallContact)
-                {
-                    _currentGlideTime = glideTime;
-                }
-                else 
-                {
-                    _currentGlideTime = 0;
-                }
-            }
         }
-        
-
-        _characterController.Move(_moveDirection * Time.deltaTime);
-    }
 
     void GravityCalculations()
     {
@@ -434,15 +508,19 @@ public class PlayerController : MonoBehaviour
         
 
     }
+#endregion
+    
+//Input Methods
+//Input for a new button press must be done with a new public void
 
-    //Input Methods
-    //Input for a new button press must be done with a new public void
-
+#region onMovement
     public void OnMovement(InputAction.CallbackContext context)
     {
         _input = context.ReadValue<Vector2>();
     }
+#endregion
 
+#region onJump
     public void OnJump (InputAction.CallbackContext context)
     {
     //Check what state the button is in
@@ -457,7 +535,9 @@ public class PlayerController : MonoBehaviour
             _startJump = false; 
         }
     }
+#endregion
 
+#region onAttack
     //Attack Button
     public void onAttack(InputAction.CallbackContext context)
     {
@@ -469,7 +549,9 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
+#endregion
 
+#region onDash
     public void onDash (InputAction.CallbackContext context)
     {   
         //if the button press is started
@@ -482,7 +564,9 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+#endregion
 
+#region Couroutines
     //coroutines
 
     //Waits .4 of a second then sets the walljumping state to false
@@ -534,6 +618,9 @@ public class PlayerController : MonoBehaviour
         isDashing = false;
         _dashTimer = dashCoolDownTime;
     }
-    
+
+
+#endregion
+
 }
 
