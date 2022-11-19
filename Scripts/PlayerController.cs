@@ -84,7 +84,7 @@ public class PlayerController : MonoBehaviour
     private SpriteRenderer _spriteRenderer; //Allows us to change sprite midgame
 
     private float _currentGlideTime;//Time the player can glide in the air
-    private bool _startGlide;
+    private bool _startGlide = true;
 
     private float _powerJumpTimer;
 
@@ -167,6 +167,10 @@ void Update()
                 _moveDirection.y = 0f;
 
             }
+            else if (isCreeping)
+            {
+                _moveDirection.x *= creepSpeed; 
+            }
             //else just move the normal walking speed.
             else
             {
@@ -202,6 +206,10 @@ void Update()
         isDoubelJumping = false;//if the player is on the ground set the doublejump to false
         isTripleJumping = false; 
         iswallJumping = false;
+        _currentGlideTime = glideTime;
+        isGroundSlamming = false;
+        _startGlide = true;
+
     }
     #endregion
 
