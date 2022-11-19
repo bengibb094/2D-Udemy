@@ -279,6 +279,13 @@ void Update()
                     _moveDirection.y = powerJumpSpeed;
                     StartCoroutine("PowerJumpWaiter");
                 }
+                //Check to see if we are on a one way platform.
+                else if (isDucking && _characterController.groundType == GroundType.OneWayPlatform)
+                {
+                    StartCoroutine(DisableOneWayPlatform(true));
+
+
+                }
                 else
                 {
                     _moveDirection.y = jumpSpeed;
@@ -458,7 +465,15 @@ void Update()
         //if we are jumping and we hit something drop right back down
         if (_moveDirection.y > 0f && _characterController.above)
         {
-            _moveDirection.y = 0f;
+            if (_characterController.ceilingType == GroundType.OneWayPlatform)//if groundType equals OneWayPlatform then start the coroutine we created to check and disable the platform for a few seconds.
+            {
+                StartCoroutine(DisableOneWayPlatform(false));
+            }
+            else
+            {
+                _moveDirection.y = 0f;
+            }
+            
         }
         //Setting the gravity to affect the player when they are moving down a wall
         if (canWallSlide && (_characterController.left || _characterController.right))//if the ability is enabled and there is something to the right or left then the gravity is affected
@@ -625,6 +640,46 @@ void Update()
         yield return new WaitForSeconds(dashTime);
         isDashing = false;
         _dashTimer = dashCoolDownTime;
+    }
+
+    IEnumerator DisableOneWayPlatform(bool checkBelow)
+    {
+        bool originalCanGroundSlam = canGroundSlam;
+        GameObject tempOneWayPlatform = null; 
+        //GameObject = tempOneWayPlatform = null;
+
+        if (checkBelow)
+        {
+            Vector2 raycastBelow = transform.position - new Vector3(0, _capsuleCollider.size.y * 0.5f,0);//Creating a new raycast to check below the player on the y axis 
+            RaycastHit2D hit = Physics2D.Raycast(raycastBelow, Vector2.down, _characterController.raycastDistance, _characterController.layerMask);//Doing the raycast
+            if (hit.collider)
+            {
+                tempOneWayPlatform = hit.collider.gameObject;//If the raycast hit hits anything tempOneWayPlatform becomes Null.
+            }
+        }
+        else
+        {
+            Vector2 raycastAbove = transform.position + new Vector3(0, _capsuleCollider.size.y * 0.5f,0);//Creating a new raycast to check above the player on the y axis 
+            RaycastHit2D hit = Physics2D.Raycast(raycastAbove, Vector2.up, _characterController.raycastDistance, _characterController.layerMask);//Doing the raycast
+            if (hit.collider)
+            {
+                tempOneWayPlatform = hit.collider.gameObject;//If the raycast hit hits anything tempOneWayPlatform becomes Null.
+            }
+        }
+        //if tempOneWayPlatform is true disbale the edge colider and can ground slam for point 25f to give the player time to pass through.
+        if (tempOneWayPlatform)
+        {
+            tempOneWayPlatform.GetComponent<EdgeCollider2D>().enabled = false; 
+            canGroundSlam = false;
+        }
+
+        yield return new WaitForSeconds(0.25f);
+        //After waiting point 25f re enable the edge collider.
+        if (tempOneWayPlatform)
+        {
+            tempOneWayPlatform.GetComponent<EdgeCollider2D>().enabled = true;
+            canGroundSlam = originalCanGroundSlam;
+        }
     }
 
 

@@ -10,4 +10,12 @@ namespace  GlobalTypes
         CollapseablePlatform,
         JumpPad,
         }
+
+    public enum WallType
+    {
+        None,
+        Normal,
+        Sticky
+
+    }
 }

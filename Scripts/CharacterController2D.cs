@@ -12,12 +12,16 @@ public class CharacterController2D : MonoBehaviour
 
     //flags
     public bool below;
-    public GroundType groundType; //reports back to character controller 2D what  ground type we are standing on.
     public bool left;
     public bool right;
     public bool above;
     public bool hitGroundThisFrame; 
     public bool hitWallThisFrame;
+
+    public GroundType groundType; //reports back to character controller 2D what  ground type we are standing on.
+    public WallType leftWallType; //WallType on our left
+    public WallType rightWallType; //WallType on your right
+    public GroundType ceilingType; //Ceiling above our heads
 
 
     private Vector2 _moveAmount;
@@ -140,10 +144,12 @@ public class CharacterController2D : MonoBehaviour
 
         if (leftHit.collider)
         {
+            leftWallType = DetermineWallType(leftHit.collider);
             left = true;
         }
         else
         {
+            leftWallType = WallType.None;
             left = false;
         }
 
@@ -153,10 +159,12 @@ public class CharacterController2D : MonoBehaviour
 
         if (rightHit.collider)
         {
+            rightWallType = DetermineWallType(rightHit.collider);
             right = true;
         }
         else
         {
+            rightWallType = WallType.None;
             right = false;
         }
 
@@ -165,10 +173,12 @@ public class CharacterController2D : MonoBehaviour
 
         if (aboveHit.collider)
         {
+            ceilingType = DetermineGroundType(aboveHit.collider);
             above = true;
         }
         else
         {
+            ceilingType = GroundType.None;
             above = false;
         }
 
@@ -178,7 +188,7 @@ public class CharacterController2D : MonoBehaviour
 
 
 
-
+#region CheckGrounded
 
 /*
     private void CheckGrounded()
@@ -250,6 +260,7 @@ public class CharacterController2D : MonoBehaviour
         System.Array.Clear(_raycastHits, 0, _raycastHits.Length);//Clear the array ray cast hits after each ground check and reset all arrays to 0
 
     }*/
+    #endregion
 
     private void DrawDebugRays(Vector2 direction, Color color)
     {
@@ -295,5 +306,18 @@ public class CharacterController2D : MonoBehaviour
         }
 
 
+    }
+
+    private WallType DetermineWallType(Collider2D collider)//passing the WallType the 2D collider we created above and calling it collider to use here
+    {
+        if (collider.GetComponent<WallEffector>())//if the collider hits a WallEffector we want to return the wall type. If there is no WallType detected by the collider than return the walltype normal.
+        {
+            WallEffector wallEffector = collider.GetComponent<WallEffector>();
+            return wallEffector.wallType;
+        }
+        else
+        {
+            return WallType.Normal;
+        }
     }
 }
