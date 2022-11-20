@@ -41,6 +41,9 @@ public class CharacterController2D : MonoBehaviour
     private bool _inAirLastFrame; 
     private bool _noSideCollissionsLastFrame;
 
+    private Transform _tempMovingPlatform;
+    private Vector2 _movingPlatformVelocity; 
+
 
     // Start is called before the first frame update
     void Start()
@@ -58,12 +61,28 @@ public class CharacterController2D : MonoBehaviour
 
         _lastPosition = _rigidbody.position;
 
+        //slope angle adjustment
         if (_slopeAngle != 0 && below == true)
         {
             if((_moveAmount.x > 0f && _slopeAngle > 0f) || (_moveAmount.x < 0f && _slopeAngle < 0f))//checking for movement and angles to adjust y axis movement.
             {
                 _moveAmount.y = -Mathf.Abs(Mathf.Tan(_slopeAngle * Mathf.Deg2Rad) * _moveAmount.x); //adjusting y axis movement to reflect slope we are on.
                 _moveAmount.y *= downForceAdjustment;//increasing downward force by 20% when travelling down a slope.
+            }
+        }
+
+        //moving platform adjustment
+        if (groundType == GroundType.MovingPlatform)
+        {
+            //offset the players movement on the X with moving platform velocity
+            _moveAmount.x += MovingPlatformAdjust().x;//Give the player the same moveamount as the platform on the x
+
+
+            //if platform is moving down offset the players movement on the Y
+            if (MovingPlatformAdjust().y < 0f)
+            {
+                _moveAmount.y += MovingPlatformAdjust().y;
+                _moveAmount.y *= downForceAdjustment;
             }
         }
 
@@ -133,6 +152,10 @@ public class CharacterController2D : MonoBehaviour
         {
             groundType = GroundType.None;
             below = false;
+            if (_tempMovingPlatform)
+            {
+                _tempMovingPlatform = null;
+            }
         }
     }
 
@@ -296,6 +319,14 @@ public class CharacterController2D : MonoBehaviour
         if (collider.GetComponent<GroundEffector>())
         {
             GroundEffector groundEffector = collider.GetComponent<GroundEffector>();
+            if (groundType == GroundType.MovingPlatform)
+            {
+                if (!_tempMovingPlatform)
+                {
+                    _tempMovingPlatform = collider.transform;
+                }
+            }
+
             return groundEffector.groundType;
 
         }
@@ -318,6 +349,21 @@ public class CharacterController2D : MonoBehaviour
         else
         {
             return WallType.Normal;
+        }
+    }
+
+    private Vector2 MovingPlatformAdjust()
+    {
+        if (_tempMovingPlatform && groundType == GroundType.MovingPlatform)
+        {
+        //the velocity equals the difference variable from the script MovingPlatform
+        _movingPlatformVelocity = _tempMovingPlatform.GetComponent<MovingPlatform>().difference;
+        //_movingPlatformVelocity can now be used in other places in the script.
+        return _movingPlatformVelocity;
+        }
+        else 
+        {
+            return Vector2.zero;
         }
     }
 }
