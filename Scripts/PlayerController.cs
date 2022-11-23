@@ -71,6 +71,7 @@ public class PlayerController : MonoBehaviour
     //input flags
     private bool _startJump;
     private bool _releaseJump;
+    private bool _holdJump;
 
     private Vector2 _input;
     private Vector2 _moveDirection;
@@ -90,6 +91,10 @@ public class PlayerController : MonoBehaviour
 
     private bool _facingRight;
     private float _dashTimer;
+
+    private float _jumpPadAmount = 15f;
+    private float _jumpPadAdjustment = 0f;
+    public Vector2 _tempVelocity;//stores velocity before we hit the ground
 #endregion
 
 // Start is called before the first frame update
@@ -186,17 +191,62 @@ void Update()
 #region onTheGround
     void onGround()
     {
+        if (_characterController.hitGroundThisFrame)
+        {
+            _tempVelocity = _moveDirection; 
+        }
+
         _moveDirection.y = 0f; //if the character is on the ground set the gravity back to zero
 
             ClearAirAbilityFlags();
 
             Jump();
 
-            DuckingCreeping();            
+            DuckingCreeping();  
+
+            JumpPad();          
 
             
     }
     #endregion
+
+    private void JumpPad()
+    {
+        if (_characterController.groundType == GroundType.JumpPad)
+        {
+            //Getting this from the character controller instead of doing another raycast ourselves here. 
+            //We are doing this so we can atach different values to different jumpPads. 
+            _jumpPadAmount = _characterController.jumpPadAmount;
+            
+            //downwards velocity for jumping off a height
+            if (-_tempVelocity.y > _jumpPadAmount)
+            {
+                _moveDirection.y = -_tempVelocity.y * 0.92f;
+            }
+            else
+            {
+                _moveDirection.y = _jumpPadAmount;
+
+            }
+
+            //if holding jumpbutton jump higher each time
+            if (_holdJump)
+            {
+                _jumpPadAdjustment += _moveDirection.y * 0.1f;//jumpPadAdhustment equals our current move direction on the y multiplied by 1/10th
+                _moveDirection.y += _jumpPadAdjustment;//move direction on the y equals jumpPadAdjustment
+            }
+            else
+            {
+                _jumpPadAdjustment = 0f;
+            }
+
+            //impose an upper limit to stop over jumping
+            if (_moveDirection.y > _characterController.jumPadUpperLimit)
+            {
+                _moveDirection.y = _characterController.jumPadUpperLimit;
+            }
+        }
+    }
 
 //Clear air abilities
 #region ClearAirAbilities
@@ -330,7 +380,7 @@ void Update()
 
             //clear power jump timer
             _powerJumpTimer = 0f;
-        }
+        } 
 
     private void Wallrunning()
         {
@@ -551,11 +601,13 @@ void Update()
         {
             _startJump = true;
             _releaseJump = false;
+            _holdJump = true;
         }
         else if (context.canceled)
         {
             _releaseJump = true;
             _startJump = false; 
+            _holdJump = false;
         }
     }
 #endregion

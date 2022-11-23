@@ -23,6 +23,9 @@ public class CharacterController2D : MonoBehaviour
     public WallType rightWallType; //WallType on your right
     public GroundType ceilingType; //Ceiling above our heads
 
+    public float jumpPadAmount;
+    public float jumPadUpperLimit; 
+
 
     private Vector2 _moveAmount;
     private Vector2 _currentPostion;
@@ -145,6 +148,13 @@ public class CharacterController2D : MonoBehaviour
             else
             {
                 below = true;
+            }
+            //if the ground type we are on is JumpPad we want to read in the prperties from the attached script in green.
+            if (groundType == GroundType.JumpPad)
+            {
+                JumpPad jumpPad = hit.collider.GetComponent<JumpPad>();//allows us to get components from the attahced script in green
+                jumpPadAmount = jumpPad.jumpPadAmount; 
+                jumPadUpperLimit = jumpPad.jumPadUpperLimit;
             }
             
         }
