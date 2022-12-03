@@ -345,6 +345,7 @@ void Update()
                 isJumping = true;
                 _characterController.DisableGroundCheck();
                 _ableToWallRun = true;
+                _characterController.ClearMovingPlatform();//Calling the component ClearMovingPlatform from the Character Controller script
                 _currentGlideTime = glideTime;//Resetting the glide time value so it can be used again.
                 isGroundSlamming = false;
             }

@@ -89,6 +89,15 @@ public class CharacterController2D : MonoBehaviour
             }
         }
 
+        if (groundType == GroundType.CollapseablePlatform)
+        {
+            if (MovingPlatformAdjust().y < 0f)//is the platform moving down away from the player
+            {
+                _moveAmount.y += MovingPlatformAdjust().y;
+                _moveAmount.y *= downForceAdjustment * 4;
+            }
+        }
+
         _currentPostion = _lastPosition + _moveAmount;
 
         _rigidbody.MovePosition(_currentPostion);
@@ -329,11 +338,16 @@ public class CharacterController2D : MonoBehaviour
         if (collider.GetComponent<GroundEffector>())
         {
             GroundEffector groundEffector = collider.GetComponent<GroundEffector>();
-            if (groundType == GroundType.MovingPlatform)
+            if (groundType == GroundType.MovingPlatform || groundType == GroundType.CollapseablePlatform)
             {
                 if (!_tempMovingPlatform)
                 {
                     _tempMovingPlatform = collider.transform;
+
+                    if (groundType == GroundType.CollapseablePlatform)
+                    {
+                        _tempMovingPlatform.GetComponent<CollapseablePlatform>().CollapsePlatform();//lok for the script CollapseablePlatform and in that script call the method CollapsePlatform
+                    }
                 }
             }
 
@@ -342,6 +356,11 @@ public class CharacterController2D : MonoBehaviour
         }
         else 
         {
+            if (_tempMovingPlatform)
+            {
+                _tempMovingPlatform = null;
+            }
+
             return GroundType.LevelGeometry;
 
         }
@@ -371,9 +390,22 @@ public class CharacterController2D : MonoBehaviour
         //_movingPlatformVelocity can now be used in other places in the script.
         return _movingPlatformVelocity;
         }
+        else if (_tempMovingPlatform && groundType == GroundType.CollapseablePlatform)
+        {
+            _movingPlatformVelocity = _tempMovingPlatform.GetComponent<CollapseablePlatform>().difference;
+            return _movingPlatformVelocity;
+        }
         else 
         {
             return Vector2.zero;
+        }
+    }
+
+    public void ClearMovingPlatform()
+    {
+        if (_tempMovingPlatform)
+        {
+            _tempMovingPlatform = null;
         }
     }
 }
