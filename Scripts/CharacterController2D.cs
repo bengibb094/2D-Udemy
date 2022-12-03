@@ -19,9 +19,23 @@ public class CharacterController2D : MonoBehaviour
     public bool hitWallThisFrame;
 
     public GroundType groundType; //reports back to character controller 2D what  ground type we are standing on.
-    public WallType leftWallType; //WallType on our left
-    public WallType rightWallType; //WallType on your right
+
+    //WallType on our left
+    public WallType leftWallType; 
+    public bool leftIsRunnable;
+    public bool leftIsJumpable;
+    public float leftSlideModifier;
+
+    //WallType on your right
+    public WallType rightWallType; 
+    public bool rightIsRunnable;
+    public bool rightIsJumpable;
+    public float rightSlideModifier;
+
     public GroundType ceilingType; //Ceiling above our heads
+
+    public WallEffector leftwallEffector;
+    public WallEffector rightWallEffector;
 
     public float jumpPadAmount;
     public float jumPadUpperLimit; 
@@ -188,6 +202,14 @@ public class CharacterController2D : MonoBehaviour
         {
             leftWallType = DetermineWallType(leftHit.collider);
             left = true;
+            leftwallEffector = leftHit.collider.GetComponent<WallEffector>();
+
+            if (leftwallEffector)
+            {
+                leftIsRunnable = leftwallEffector.isRunnable;
+                leftIsJumpable = leftwallEffector.isjumpable;
+                leftSlideModifier =  leftwallEffector.wallSlideAmount;
+            }
         }
         else
         {
@@ -203,6 +225,16 @@ public class CharacterController2D : MonoBehaviour
         {
             rightWallType = DetermineWallType(rightHit.collider);
             right = true;
+            rightWallEffector = rightHit.collider.GetComponent<WallEffector>();
+
+            rightWallEffector = rightHit.collider.GetComponent<WallEffector>();
+
+            if (rightWallEffector)
+            {
+                rightIsRunnable = rightWallEffector.isRunnable;
+                rightIsJumpable = rightWallEffector.isjumpable;
+                rightSlideModifier = rightWallEffector.wallSlideAmount;
+            }
         }
         else
         {

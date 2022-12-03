@@ -389,6 +389,15 @@ void Update()
             //Check is the ability on and is there actually a wall to our left or right
             if (canWallRun && (_characterController.left || _characterController.right))
             {
+                if (_characterController.left && _characterController.leftwallEffector && !_characterController.leftIsRunnable)
+                {
+                    return;
+                }
+                else if (_characterController.right && _characterController.rightWallEffector && !_characterController.rightIsRunnable)
+                {
+                    return;
+                }
+                
                 if (_input.y > 0 && _ableToWallRun)//if the move up input is being pressed and ableToWallRun is true then wall run
                 {
                     _moveDirection.y = wallRunAmount;
@@ -473,9 +482,19 @@ void Update()
                     }
 
                 }
+
+
                 //Wall Jumping
                 if (canWallJump && (_characterController.left || _characterController.right))
                 {
+                    if (_characterController.left && _characterController.leftwallEffector && !_characterController.leftIsJumpable)
+                    {
+                        return;
+                    }
+                    else if (_characterController.right && _characterController.rightWallEffector && !_characterController.rightIsJumpable)
+                    {
+                        return;
+                    }
                 
                 if (_moveDirection.x <= 0 && _characterController.left)
                 {
@@ -537,7 +556,19 @@ void Update()
 
             if (_moveDirection.y <= 0)
             {
-                _moveDirection.y -= (gravity * wallSlideAmount) * Time.deltaTime; 
+                if (_characterController.left && _characterController.leftwallEffector)//adjusting slide amount from the variables set in the Wall Effector script
+                {
+                    _moveDirection.y -= (gravity * _characterController.leftSlideModifier) * Time.deltaTime;
+                }
+                else if (_characterController.right && _characterController.rightWallEffector)
+                {
+                    _moveDirection.y -= (gravity * _characterController.rightSlideModifier) * Time.deltaTime;
+                }
+                else
+                {
+                    _moveDirection.y -= (gravity * wallSlideAmount) * Time.deltaTime;//default value
+
+                }
 
             }
             else
