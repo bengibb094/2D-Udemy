@@ -30,6 +30,7 @@ public class PlayerController : MonoBehaviour
     public float dashTime = 0.2f;
     public float dashCoolDownTime = 1f;
     public float groundSlamSpeed = 60f;
+    public float swimSpeed = 150f;
 #endregion
 
 #region player abilities
@@ -48,6 +49,7 @@ public class PlayerController : MonoBehaviour
     public bool canGroundDash;
     public bool canAirDash;
     public bool canGroundSlam;
+    public bool canSwim;
 #endregion
 
 #region player state
@@ -65,6 +67,7 @@ public class PlayerController : MonoBehaviour
     public bool isPowerJumping;
     public bool isDashing;
     public bool isGroundSlamming;
+    public bool isSwimming;
 #endregion
 
 #region private properties
@@ -124,6 +127,10 @@ void Update()
     if (_characterController.below) //On the ground
     {
         onGround();
+    }
+    else if(_characterController.inWater)
+    {
+        InWater();
     }
     else //In the air
     {
@@ -209,6 +216,42 @@ void Update()
             
     }
     #endregion
+
+    void InWater()
+    {
+        ClearGroundAbilityflags();
+
+        AirJump();
+
+        if (_input.y != 0f && canSwim && !_holdJump)
+        {
+            if (_input.y > 0 && !_characterController.isSubmerged)
+            {
+                _moveDirection.y = 0f;
+            }
+            else
+            {
+                _moveDirection.y = (_input.y * swimSpeed) * Time.deltaTime;
+
+            }
+
+        }
+        else if (_moveDirection.y < 0 && _input.y == 0)
+        {
+            _moveDirection.y += 2f;
+        }
+
+        if (_characterController.isSubmerged && canSwim)
+        {
+            isSwimming = true;
+
+        }
+        else 
+        {
+            isSwimming = false;
+        }
+
+    }
 
     private void JumpPad()
     {
@@ -481,6 +524,14 @@ void Update()
                         isDoubelJumping = true;
                     }
 
+                }
+
+                //Jump in Water
+                if (_characterController.inWater)
+                {
+                    isDoubelJumping = false;
+                    isTripleJumping = false;
+                    _moveDirection.y = jumpSpeed;
                 }
 
 
