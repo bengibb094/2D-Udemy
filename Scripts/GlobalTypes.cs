@@ -18,4 +18,12 @@ namespace  GlobalTypes
         Sticky
 
     }
+
+    public enum AirEffectorType
+    {
+        None,
+        Ladder,
+        Updraft,
+        TractorBeam
+    }
 }

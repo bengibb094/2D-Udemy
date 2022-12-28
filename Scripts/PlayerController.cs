@@ -128,6 +128,11 @@ void Update()
     {
         onGround();
     }
+    else if (_characterController.inAirEffector)
+    {
+        inAirEffector();
+
+    }
     else if(_characterController.inWater)
     {
         InWater();
@@ -198,6 +203,12 @@ void Update()
 #region onTheGround
     void onGround()
     {
+        if (_characterController.airEffectorType == AirEffectorType.Ladder)
+        {
+            inAirEffector();
+            return;
+        }
+
         if (_characterController.hitGroundThisFrame)
         {
             _tempVelocity = _moveDirection; 
@@ -253,6 +264,42 @@ void Update()
 
     }
 
+    void inAirEffector()
+    {
+        if (_characterController.airEffectorType == AirEffectorType.Ladder)
+        {
+            if (_input.y > 0f)
+            {
+                _moveDirection.y = _characterController.airEffectorSpeed;
+            }
+            else if (_input.y < 0f)
+            {
+                _moveDirection.y = -_characterController.airEffectorSpeed;
+            }
+            else
+            {
+                _moveDirection.y = 0f;
+            }
+        }
+
+        if (_characterController.airEffectorType == AirEffectorType.Updraft)
+        {
+            if (_input.y <-0f)
+            {
+                isGliding = false;
+            }
+            if (isGliding)
+            {
+                _moveDirection.y = _characterController.airEffectorSpeed;
+
+            }
+            else
+            {
+                inAir();
+            }
+        }
+    }
+
     private void JumpPad()
     {
         if (_characterController.groundType == GroundType.JumpPad)
@@ -302,6 +349,7 @@ void Update()
         _currentGlideTime = glideTime;
         isGroundSlamming = false;
         _startGlide = true;
+        isGliding = false; 
 
     }
     #endregion
@@ -408,6 +456,11 @@ void Update()
         Wallrunning();
 
         GravityCalculations();
+
+        if (isGliding && _input.y <= 0f)
+        {
+            isGliding = false;
+        }
 
     }
 

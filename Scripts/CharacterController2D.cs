@@ -44,6 +44,12 @@ public class CharacterController2D : MonoBehaviour
     public bool inWater;
     public bool isSubmerged;
 
+    //Air Effector 
+    public bool inAirEffector;
+    public AirEffectorType airEffectorType;
+    public float airEffectorSpeed;
+    public Vector2 airEffectorDirection;
+
 
     private Vector2 _moveAmount;
     private Vector2 _currentPostion;
@@ -64,6 +70,8 @@ public class CharacterController2D : MonoBehaviour
 
     private Transform _tempMovingPlatform;
     private Vector2 _movingPlatformVelocity; 
+    
+    private AirEffectors _airEffector;
 
 
     // Start is called before the first frame update
@@ -462,6 +470,16 @@ public class CharacterController2D : MonoBehaviour
         {
             inWater = true;
         }
+
+        if (collision.gameObject.GetComponent<AirEffectors>())
+        {
+            inAirEffector = true;
+            _airEffector = collision.gameObject.GetComponent<AirEffectors>();
+
+            airEffectorType = _airEffector.airEffectorType;
+            airEffectorSpeed = _airEffector.speed;
+            airEffectorDirection = _airEffector.direction;
+        }
         
     }
     
@@ -488,5 +506,14 @@ public class CharacterController2D : MonoBehaviour
             _rigidbody.velocity = Vector2.zero;
             inWater = false;
         } 
+
+        if (collision.gameObject.GetComponent<AirEffectors>())
+        {
+            inAirEffector = false;
+            _airEffector = null;
+            airEffectorType = AirEffectorType.None;
+            airEffectorSpeed = 0f;
+            airEffectorDirection = Vector2.zero;
+        }
     }
 }
